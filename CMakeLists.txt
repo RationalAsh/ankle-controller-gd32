@@ -54,13 +54,12 @@ target_link_options(${EXECUTABLE} PRIVATE
         -mthumb
         -mfpu=fpv4-sp-d16
         -mfloat-abi=hard
-        -specs=nano.specs
+        -specs=nosys.specs
         -lc
         -lm
         -lnosys
         -Wl,-Map=${PROJECT_NAME}.map,--cref
         -Wl,--gc-sections
-        --specs=nosys.specs
         )
 
 # Print executable size
@@ -73,4 +72,9 @@ add_custom_command(TARGET ${EXECUTABLE}
         POST_BUILD
         COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
         COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
+
+add_custom_command(TARGET ${EXECUTABLE}
+        POST_BUILD
+        COMMAND arm-none-eabi-objdump -d --no-show-raw-insn -marm ${PROJECT_NAME}.out > ${PROJECT_NAME}.asm
+        COMMAND arm-none-eabi-objdump -s -j .isr_vector ${PROJECT_NAME}.out > ${PROJECT_NAME}.isr_vector)
 
