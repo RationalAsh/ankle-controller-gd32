@@ -7,6 +7,7 @@ set(CMAKE_CX_STANDARD 11)
 set(CMAKE_C)
 set(EXECUTABLE ${PROJECT_NAME}.out)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/arm-none-eabi-gcc.cmake")
+set(SYSTEM_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/BSP/CMSIS/GD/GD32F4xx/Include")
 
 
 add_compile_options(
@@ -24,12 +25,13 @@ add_compile_definitions(
 )
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/BSP")
-#add_subdirectory("${CMAKE_SOURCE_DIR}/src/FreeRTOS_Kernel")
+add_subdirectory("${CMAKE_SOURCE_DIR}/src/FreeRTOS")
 
 add_executable(${EXECUTABLE} "${CMAKE_SOURCE_DIR}/src/main.cpp") 
 
 target_link_libraries(${EXECUTABLE} LINK_PUBLIC
         bsp
+        freertos_kernel
 )
 
 target_link_options(${EXECUTABLE} PRIVATE
