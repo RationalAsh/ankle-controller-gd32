@@ -8,45 +8,29 @@ set(CMAKE_C)
 set(EXECUTABLE ${PROJECT_NAME}.out)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/arm-none-eabi-gcc.cmake")
 
-# Source directories
-set(CMSIS_DIR "${CMAKE_SOURCE_DIR}/src/CMSIS")
-set(STD_PERIPH_DIR "${CMAKE_SOURCE_DIR}/src/GD32F4xx_standard_peripheral")
-set(BSP_DIR "${CMAKE_SOURCE_DIR}/src/BSP")
 
-file(GLOB_RECURSE CMSIS_SOURCES "${CMSIS_DIR}/*.c")
-file(GLOB_RECURSE STD_PERIPH_SOURCES "${STD_PERIPH_DIR}/*.c")
-file(GLOB_RECURSE BSP_SOURCES "${BSP_DIR}/*.c")
-set(STARTUP_FILE "${CMAKE_SOURCE_DIR}/src/CMSIS/GD/GD32F4xx/Source/GCC/startup_gd32f405_425.S")
-
-# Concatenate all the lists into one
-set(ALL_C_SOURCES "src/main.cpp" ${CMSIS_SOURCES} ${STD_PERIPH_SOURCES} ${BSP_SOURCES} ${STARTUP_FILE})
-
-add_executable(${EXECUTABLE} ${ALL_C_SOURCES}) 
-
-target_compile_definitions(${EXECUTABLE} PRIVATE
-        -DGD32F425
-        )
-
-target_include_directories(${EXECUTABLE} PRIVATE
-        "${BSP_DIR}"
-        "${CMSIS_DIR}"
-        "${CMSIS_DIR}/GD/GD32F4xx/Include"
-        "${STD_PERIPH_DIR}/Include"
-        )
-
-target_compile_options(${EXECUTABLE} PRIVATE
+add_compile_options(
         -mcpu=cortex-m4
         -mthumb
         -mfpu=fpv4-sp-d16
         -mfloat-abi=hard
-
         -fdata-sections
         -ffunction-sections
-
         -Wall
+)
 
-        $<$<CONFIG:Debug>:-Og>
-        )
+add_compile_definitions(
+        -DGD32F425
+)
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/src/BSP")
+#add_subdirectory("${CMAKE_SOURCE_DIR}/src/FreeRTOS_Kernel")
+
+add_executable(${EXECUTABLE} "${CMAKE_SOURCE_DIR}/src/main.cpp") 
+
+target_link_libraries(${EXECUTABLE} LINK_PUBLIC
+        bsp
+)
 
 target_link_options(${EXECUTABLE} PRIVATE
         -T${CMAKE_SOURCE_DIR}/src/BSP/gd32f425.ld
