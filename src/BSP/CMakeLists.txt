@@ -17,6 +17,7 @@ target_compile_definitions(bsp PUBLIC
         )
 
 target_include_directories(bsp PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}"
         "${BSP_DIR}"
         "${CMSIS_DIR}"
         "${CMSIS_DIR}/GD/GD32F4xx/Include"

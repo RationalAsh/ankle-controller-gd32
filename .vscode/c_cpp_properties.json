@@ -17,8 +17,17 @@
         {
             "name": "STM32Dev",
             "includePath": [
-                "${workspaceFolder}/src/**"
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/src/BSP/CMSIS/GD/GD32F4xx/Include",
+                "${workspaceFolder}/src/BSP/CMSIS",
+                "${workspaceFolder}/src/BSP/",
+                "${workspaceFolder}/src/BSP/GD32F4xx_standard_peripheral/Include"
             ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ]
+            },
             "defines": [
                 "GD32F425"
             ],
