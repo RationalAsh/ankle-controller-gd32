@@ -21,11 +21,11 @@ void vTaskBlinkLED( void * pvParameters )
 
     while(1) {
         gpio_bit_set(GPIOC, GPIO_PIN_1);
-        gpio_bit_set(GPIOC, GPIO_PIN_2);
-        vTaskDelay(20);
-        gpio_bit_reset(GPIOC, GPIO_PIN_1);
         gpio_bit_reset(GPIOC, GPIO_PIN_2);
-        vTaskDelay(20);
+        vTaskDelay(50);
+        gpio_bit_reset(GPIOC, GPIO_PIN_1);
+        gpio_bit_set(GPIOC, GPIO_PIN_2);
+        vTaskDelay(50);
     }
 }
 
@@ -113,6 +113,6 @@ int main(void)
         gpio_bit_reset(GPIOC, GPIO_PIN_2);
         
         // Delay 100ms
-        delay_1ms(1-00);
+        delay_1ms(1000);
     }
 }
