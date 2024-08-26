@@ -11,6 +11,8 @@
 #include "systick.h"
 #include "system_gd32f4xx.h"
 
+void setup_peripherals();
+
 /* Task to blink an led. */
 void vTaskBlinkLED( void * pvParameters )
 {
@@ -25,7 +27,7 @@ void vTaskBlinkLED( void * pvParameters )
         vTaskDelay(50);
         gpio_bit_reset(GPIOC, GPIO_PIN_1);
         gpio_bit_set(GPIOC, GPIO_PIN_2);
-        vTaskDelay(50);
+        vTaskDelay(100);
     }
 }
 
@@ -55,18 +57,8 @@ int main(void)
     /* configure systick */
     systick_config();
 
-    /* enable the LEDs GPIO clock */
-    rcu_periph_clock_enable(RCU_GPIOC);
-
-    /* configure LED GPIO port pin 1 */
-    gpio_mode_set(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_1);
-    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_1);
-    gpio_bit_reset(GPIOC, GPIO_PIN_1);
-
-    /* configure LED GPIO port pin 2 */
-    gpio_mode_set(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2);
-    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
-    gpio_bit_reset(GPIOC, GPIO_PIN_2);
+    // Set up the peripherals
+    setup_peripherals();
 
     // Turn on both LEDs
     gpio_bit_set(GPIOC, GPIO_PIN_1);
@@ -96,9 +88,10 @@ int main(void)
     /*
      * If all is well main() will not reach here because the scheduler will now
      * be running the created tasks. If main() does reach here then there was
-     * not enough heap memory to create either the idle or timer tasks
-     * (described later in this book). Chapter 3 provides more information on
-     * heap memory management.
+     * not enough heap memory to create either the idle or timer tasks. 
+     * 
+     * If we do reach here, then the LED will blink with long 1s delays, to indicate
+     * that the scheduler has failed to start.
      */
     for( ;; ) {
         // Turn on both LEDs
@@ -115,4 +108,61 @@ int main(void)
         // Delay 100ms
         delay_1ms(1000);
     }
+}
+
+
+// Function to set up gpio periopherals
+void setup_gpio() {
+    // Enable the GPIOC peripheral
+    rcu_periph_clock_enable(RCU_GPIOC);
+
+    // Configure the GPIOC pin 1 and 2 as output
+    gpio_mode_set(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_1);
+    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_1);
+    gpio_bit_reset(GPIOC, GPIO_PIN_1);
+
+    gpio_mode_set(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2);
+    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
+    gpio_bit_reset(GPIOC, GPIO_PIN_2);
+
+    // Enable the GPIOA peripheral
+    rcu_periph_clock_enable(RCU_GPIOA);
+    // Confiugure GPIOA pin 11 and 12 and CAN RX and TX
+    gpio_af_set(GPIOA, GPIO_AF_9, GPIO_PIN_11);
+    gpio_af_set(GPIOA, GPIO_AF_9, GPIO_PIN_12);
+
+    // Enable the GPIOB peripheral
+    rcu_periph_clock_enable(RCU_GPIOB);
+    // Set up gpio output options
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12);
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13);
+    // Set up gpio mode
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_12);
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_13);
+    // Configure GPIOB pins 12 and 13 as CAN RX and TX
+    gpio_af_set(GPIOB, GPIO_AF_9, GPIO_PIN_12);
+    gpio_af_set(GPIOB, GPIO_AF_9, GPIO_PIN_13);
+}
+
+// Function to setup the CAN peripheral
+void setup_can() {
+    // Enable the CAN0 peripheral
+    rcu_periph_clock_enable(RCU_CAN0);
+
+    // Configure the CAN0 peripheral
+    // can_deinit(CAN0);
+
+    // Configure the CAN0 peripheral
+    can_parameter_struct can_parameter;
+    can_struct_para_init(CAN_INIT_STRUCT, &can_parameter);
+    // can_init(CAN0, &can_parameter);
+}
+
+// Function to set up all the peripherals on the board
+void setup_peripherals() {
+    // Set up the GPIO peripherals
+    setup_gpio();
+
+    // Set up the CAN peripheral
+    setup_can();
 }
