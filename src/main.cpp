@@ -11,6 +11,47 @@
 #include "systick.h"
 #include "system_gd32f4xx.h"
 
+static can_receive_message_struct receive_message;
+static FlagStatus can0_receive_flag;
+static FlagStatus can1_receive_flag;
+static FlagStatus can0_error_flag;
+static FlagStatus can1_error_flag;
+
+/*!
+    \brief      this function handles CAN0 RX0 exception
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void CAN0_RX0_IRQHandler(void)
+{
+    /* check the receive message */
+    can_message_receive(CAN0, CAN_FIFO0, &receive_message);
+    
+    if((0x7ab == receive_message.rx_sfid)&&(CAN_FF_STANDARD == receive_message.rx_ff)&&(8 == receive_message.rx_dlen)){
+        can0_receive_flag = SET; 
+    }else{
+        can0_error_flag = SET; 
+    }
+}
+/*!
+    \brief      this function handles CAN1 RX0 exception
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void CAN1_RX0_IRQHandler(void)
+{
+    /* check the receive message */
+    can_message_receive(CAN1, CAN_FIFO0, &receive_message);
+    
+    if((0x7ab == receive_message.rx_sfid)&&(CAN_FF_STANDARD == receive_message.rx_ff)&&(8 == receive_message.rx_dlen)){
+        can1_receive_flag = SET; 
+    }else{
+        can1_error_flag = SET; 
+    }
+}
+
 void setup_peripherals();
 
 /* Task to blink an led. */
@@ -112,11 +153,16 @@ int main(void)
 
 
 // Function to set up gpio periopherals
-void setup_gpio() {
+static inline void setup_gpio() {
+    // Enable the GPIOA peripheral
+    rcu_periph_clock_enable(RCU_GPIOA);
+    // Enable the GPIOB peripheral
+    rcu_periph_clock_enable(RCU_GPIOB);
     // Enable the GPIOC peripheral
     rcu_periph_clock_enable(RCU_GPIOC);
 
-    // Configure the GPIOC pin 1 and 2 as output
+    /******** Configure LED GPIOs ********/
+    // Configure the GPIOC pin 1 and 2 as output for LEDs
     gpio_mode_set(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_1);
     gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_1);
     gpio_bit_reset(GPIOC, GPIO_PIN_1);
@@ -125,14 +171,18 @@ void setup_gpio() {
     gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
     gpio_bit_reset(GPIOC, GPIO_PIN_2);
 
-    // Enable the GPIOA peripheral
-    rcu_periph_clock_enable(RCU_GPIOA);
+    /******** Configure CAN GPIOs ********/
+    // Set up gpio output options
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_11);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12);
+    // Set up gpio mode
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_11);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO_PIN_12);
     // Confiugure GPIOA pin 11 and 12 and CAN RX and TX
     gpio_af_set(GPIOA, GPIO_AF_9, GPIO_PIN_11);
     gpio_af_set(GPIOA, GPIO_AF_9, GPIO_PIN_12);
-
-    // Enable the GPIOB peripheral
-    rcu_periph_clock_enable(RCU_GPIOB);
+    
+    
     // Set up gpio output options
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13);
@@ -145,17 +195,41 @@ void setup_gpio() {
 }
 
 // Function to setup the CAN peripheral
-void setup_can() {
-    // Enable the CAN0 peripheral
+static inline void setup_can() {
+    // Enable the CAN0 peripheral and the CAN1 peripheral
     rcu_periph_clock_enable(RCU_CAN0);
+    rcu_periph_clock_enable(RCU_CAN1);
 
-    // Configure the CAN0 peripheral
-    // can_deinit(CAN0);
+    // Initialize can bus registers
+    can_deinit(CAN0);
+    can_deinit(CAN1);
 
-    // Configure the CAN0 peripheral
+    // Configure the CAN0 and CAN1 peripherals
     can_parameter_struct can_parameter;
     can_struct_para_init(CAN_INIT_STRUCT, &can_parameter);
-    // can_init(CAN0, &can_parameter);
+
+    /* initialize CAN parameters */
+    can_parameter.time_triggered = DISABLE;
+    can_parameter.auto_bus_off_recovery = ENABLE;
+    can_parameter.auto_wake_up = DISABLE;
+    can_parameter.auto_retrans = ENABLE;
+    can_parameter.rec_fifo_overwrite = DISABLE;
+    can_parameter.trans_fifo_order = DISABLE;
+    can_parameter.working_mode = CAN_NORMAL_MODE;
+    can_parameter.resync_jump_width = CAN_BT_SJW_1TQ;
+    can_parameter.time_segment_1 = CAN_BT_BS1_7TQ;
+    can_parameter.time_segment_2 = CAN_BT_BS2_2TQ;
+    
+    // Baud rate is 1Mbps
+    can_parameter.prescaler = 5;
+
+    can_init(CAN0, &can_parameter);
+    can_init(CAN1, &can_parameter);
+}
+
+static inline void nvic_config() {
+    nvic_irq_enable(CAN0_RX0_IRQn, 0, 0);
+    nvic_irq_enable(CAN1_RX0_IRQn, 0, 0);
 }
 
 // Function to set up all the peripherals on the board

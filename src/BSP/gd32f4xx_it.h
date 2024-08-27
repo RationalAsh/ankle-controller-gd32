@@ -60,6 +60,10 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 /* this function handles SysTick exception */
 void SysTick_Handler(void);
+/* this function handles CAN0 RX0 exception */
+void CAN0_RX0_IRQHandler(void);
+/* this function handles CAN1 RX0 exception */
+void CAN1_RX0_IRQHandler(void);
 
 #ifdef __cplusplus
 }

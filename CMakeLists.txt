@@ -18,6 +18,12 @@ add_compile_options(
         -fdata-sections
         -ffunction-sections
         -Wall
+        -Wextra
+        -fshort-enums 
+        -Wsign-compare
+        -Wdouble-promotion
+        -ffast-math
+        -Os
 )
 
 add_compile_definitions(
