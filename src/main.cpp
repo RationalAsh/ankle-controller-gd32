@@ -248,19 +248,19 @@ static inline void setup_can() {
     can_struct_para_init(CAN_INIT_STRUCT, &can_parameter);
 
     /* initialize CAN parameters */
-    can_parameter.time_triggered = DISABLE;
-    can_parameter.auto_bus_off_recovery = ENABLE;
-    can_parameter.auto_wake_up = DISABLE;
-    can_parameter.auto_retrans = ENABLE;
-    can_parameter.rec_fifo_overwrite = DISABLE;
-    can_parameter.trans_fifo_order = DISABLE;
-    can_parameter.working_mode = CAN_NORMAL_MODE;
-    can_parameter.resync_jump_width = CAN_BT_SJW_1TQ;
-    can_parameter.time_segment_1 = CAN_BT_BS1_7TQ;
-    can_parameter.time_segment_2 = CAN_BT_BS2_2TQ;
+    can_parameter.time_triggered = DISABLE;             // Time triggered communication mode disable
+    can_parameter.auto_bus_off_recovery = ENABLE;       // Automatic bus-off recovery enable
+    can_parameter.auto_wake_up = DISABLE;               // Automatic wake-up mode disable
+    can_parameter.auto_retrans = ENABLE;                // Automatic retransmission mode enable
+    can_parameter.rec_fifo_overwrite = DISABLE;         // Receive FIFO overwrite mode disable
+    can_parameter.trans_fifo_order = DISABLE;           // Transmit FIFO order
+    can_parameter.working_mode = CAN_NORMAL_MODE;       // CAN normal mode
+    can_parameter.resync_jump_width = CAN_BT_SJW_1TQ;   // Resynchronization jump width is 1 time quantum
+    can_parameter.time_segment_1 = CAN_BT_BS1_7TQ;      // Time segment 1 is 7 time quantum
+    can_parameter.time_segment_2 = CAN_BT_BS2_2TQ;      // Time segment 2 is 2 time quantum
     
     // Baud rate is 1Mbps
-    can_parameter.prescaler = 5;
+    can_parameter.prescaler = 5;                        // Baud rate prescaler is 5
 
     can_init(CAN0, &can_parameter);
     can_init(CAN1, &can_parameter);
