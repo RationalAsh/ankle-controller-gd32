@@ -11,6 +11,7 @@
 #include "gd32f4xx_it.h"
 #include "systick.h"
 #include "system_gd32f4xx.h"
+#include <stdio.h>
 
 static can_receive_message_struct receive_message;
 static FlagStatus can0_receive_flag;
@@ -101,6 +102,8 @@ int main(void)
 
     // Set up the peripherals
     setup_peripherals();
+
+    printf("Peripherals setup complete\n");
 
     // Turn on both LEDs
     gpio_bit_set(GPIOC, GPIO_PIN_1);
@@ -217,6 +220,17 @@ static inline void setup_gpio() {
     // Configure GPIOB pins 6 and 7 as encoder A and B channels
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_6);
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_7);
+
+    /* Configure the GPIO pins PC10 and PC11 for USART2 */
+    // Set up gpio output options
+    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_10);
+    gpio_output_options_set(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_11);
+    // Set up gpio mode
+    gpio_mode_set(GPIOC, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_10);
+    gpio_mode_set(GPIOC, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_11);
+    // Configure GPIOC pins 10 and 11 as USART2 TX and RX
+    gpio_af_set(GPIOC, GPIO_AF_7, GPIO_PIN_10);
+    gpio_af_set(GPIOC, GPIO_AF_7, GPIO_PIN_11);
 }
 
 // Function to setup the CAN peripheral
@@ -280,6 +294,8 @@ static inline void incremental_encoder2_setup() {
     // Enable clock to timer 4
     rcu_periph_clock_enable(RCU_TIMER4);
 
+    timer_deinit(TIMER4);
+
     // Enable count
     timer_enable(TIMER4);
     // Set timer mode
@@ -291,6 +307,20 @@ static inline void incremental_encoder2_setup() {
     timer_autoreload_value_config(TIMER4, 0xFFFF);
     // Set the initial value to 0
     timer_counter_value_config(TIMER4, 0x0000);
+}
+
+static inline void setup_usart() {
+    // Enable the USART2 peripheral
+    rcu_periph_clock_enable(RCU_USART2);
+
+    // Set the baud rate to 500000
+    usart_baudrate_set(USART2, 500000U);
+
+    // Receive and transmit enable
+    usart_deinit(USART2);
+    usart_receive_config(USART2, USART_RECEIVE_ENABLE);
+    usart_transmit_config(USART2, USART_TRANSMIT_ENABLE);
+    usart_enable(USART2);
 }
 
 // Function to set up all the peripherals on the board
@@ -305,6 +335,17 @@ void setup_peripherals() {
     incremental_encoder1_setup();
     incremental_encoder2_setup();
 
+    // Set up the USART peripheral
+    setup_usart();
+
     // Set up the NVIC
     nvic_config();
+}
+
+/* retarget the C library printf function to the USART */
+int fputc(int ch, FILE *f)
+{
+    usart_data_transmit(USART2, (uint8_t)ch);
+    while(RESET == usart_flag_get(USART2, USART_FLAG_TBE));
+    return ch;
 }
