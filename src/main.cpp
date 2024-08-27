@@ -192,6 +192,30 @@ static inline void setup_gpio() {
     // Configure GPIOB pins 12 and 13 as CAN RX and TX
     gpio_af_set(GPIOB, GPIO_AF_9, GPIO_PIN_12);
     gpio_af_set(GPIOB, GPIO_AF_9, GPIO_PIN_13);
+
+
+    /* Configure the GPIO pin for the encoders */
+    // First TIM3 for PA6 and PA7
+    // Set up gpio output options
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
+    // Set up gpio mode
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN, GPIO_PIN_6);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN, GPIO_PIN_7);
+    // Configure GPIOA pins 6 and 7 as encoder A and B channels
+    gpio_af_set(GPIOA, GPIO_AF_2, GPIO_PIN_6);
+    gpio_af_set(GPIOA, GPIO_AF_2, GPIO_PIN_7);
+
+    // Next TIM4 for PB6 and PB7
+    // Set up gpio output options
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
+    gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
+    // Set up gpio mode
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN, GPIO_PIN_6);
+    gpio_mode_set(GPIOB, GPIO_MODE_AF, GPIO_PUPD_PULLDOWN, GPIO_PIN_7);
+    // Configure GPIOB pins 6 and 7 as encoder A and B channels
+    gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_6);
+    gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_7);
 }
 
 // Function to setup the CAN peripheral
@@ -231,6 +255,12 @@ static inline void nvic_config() {
     nvic_irq_enable(CAN0_RX0_IRQn, 0, 0);
     nvic_irq_enable(CAN1_RX0_IRQn, 0, 0);
 }
+
+// Function to set up the timer peripheral to 
+// count incremental encoder pulses (A and B channels)
+static inline void incremental_encoder1_setup() {
+
+} 
 
 // Function to set up all the peripherals on the board
 void setup_peripherals() {
