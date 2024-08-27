@@ -239,4 +239,7 @@ void setup_peripherals() {
 
     // Set up the CAN peripheral
     setup_can();
+
+    // Set up the NVIC
+    nvic_config();
 }
