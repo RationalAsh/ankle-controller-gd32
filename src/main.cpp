@@ -7,6 +7,7 @@
 #include "task.h"
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_gpio.h"
+#include "gd32f4xx_timer.h"
 #include "gd32f4xx_it.h"
 #include "systick.h"
 #include "system_gd32f4xx.h"
@@ -259,8 +260,38 @@ static inline void nvic_config() {
 // Function to set up the timer peripheral to 
 // count incremental encoder pulses (A and B channels)
 static inline void incremental_encoder1_setup() {
+    // Enable clock to timer 3
+    rcu_periph_clock_enable(RCU_TIMER3);
 
-} 
+    // Enable count
+    timer_enable(TIMER3);
+    // Set timer mode
+    timer_quadrature_decoder_mode_config(TIMER3, TIMER_ENCODER_MODE2, TIMER_IC_POLARITY_RISING, TIMER_IC_POLARITY_RISING);
+    // Set prescaler
+    timer_prescaler_config(TIMER3, 0x0000, TIMER_PSC_RELOAD_NOW);
+    // Set the autoreload value
+    timer_auto_reload_shadow_enable(TIMER3);
+    timer_autoreload_value_config(TIMER3, 0xFFFF);
+    // Set the initial value to 0
+    timer_counter_value_config(TIMER3, 0x0000);
+}
+
+static inline void incremental_encoder2_setup() {
+    // Enable clock to timer 4
+    rcu_periph_clock_enable(RCU_TIMER4);
+
+    // Enable count
+    timer_enable(TIMER4);
+    // Set timer mode
+    timer_quadrature_decoder_mode_config(TIMER4, TIMER_ENCODER_MODE2, TIMER_IC_POLARITY_RISING, TIMER_IC_POLARITY_RISING);
+    // Set prescaler
+    timer_prescaler_config(TIMER4, 0x0000, TIMER_PSC_RELOAD_NOW);
+    // Set the autoreload value
+    timer_auto_reload_shadow_enable(TIMER4);
+    timer_autoreload_value_config(TIMER4, 0xFFFF);
+    // Set the initial value to 0
+    timer_counter_value_config(TIMER4, 0x0000);
+}
 
 // Function to set up all the peripherals on the board
 void setup_peripherals() {
@@ -269,6 +300,10 @@ void setup_peripherals() {
 
     // Set up the CAN peripheral
     setup_can();
+
+    // Set up the incremental encoders
+    incremental_encoder1_setup();
+    incremental_encoder2_setup();
 
     // Set up the NVIC
     nvic_config();
