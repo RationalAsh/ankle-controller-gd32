@@ -266,8 +266,8 @@ static inline void setup_can() {
     can_init(CAN1, &can_parameter);
 
     // Enable the CAN Bus reception FIFO0 not empty interrupt
-    can_interrupt_enable(CAN0, CAN_INT_RFNE0);
-    can_interrupt_enable(CAN1, CAN_INT_RFNE0);
+    // can_interrupt_enable(CAN0, CAN_INT_RFNE0);
+    // can_interrupt_enable(CAN1, CAN_INT_RFNE0);
 }
 
 static inline void nvic_config() {
