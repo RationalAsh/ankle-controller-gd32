@@ -49,7 +49,7 @@ void CAN1_RX0_IRQHandler(void)
     
     if((0x7ab == receive_message.rx_sfid)&&(CAN_FF_STANDARD == receive_message.rx_ff)&&(8 == receive_message.rx_dlen)){
         can1_receive_flag = SET; 
-    }else{
+    } else {
         can1_error_flag = SET; 
     }
 }
@@ -264,6 +264,10 @@ static inline void setup_can() {
 
     can_init(CAN0, &can_parameter);
     can_init(CAN1, &can_parameter);
+
+    // Enable the CAN Bus reception FIFO0 not empty interrupt
+    can_interrupt_enable(CAN0, CAN_INT_RFNE0);
+    can_interrupt_enable(CAN1, CAN_INT_RFNE0);
 }
 
 static inline void nvic_config() {
