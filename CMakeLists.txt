@@ -34,12 +34,14 @@ add_compile_definitions(
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/BSP")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/FreeRTOS")
+add_subdirectory("${CMAKE_SOURCE_DIR}/src/Simulink")
 
 add_executable(${EXECUTABLE} "${CMAKE_SOURCE_DIR}/src/main.cpp") 
 
 target_link_libraries(${EXECUTABLE} LINK_PUBLIC
         bsp
         freertos_kernel
+        simulink
 )
 
 target_link_options(${EXECUTABLE} PRIVATE

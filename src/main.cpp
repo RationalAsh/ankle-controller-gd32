@@ -13,12 +13,14 @@
 #include "system_gd32f4xx.h"
 #include <stdio.h>
 #include "arm_math.h"
+#include "backsupport_gyems_v4_f446.h"
 
 static can_receive_message_struct receive_message;
 static FlagStatus can0_receive_flag;
 static FlagStatus can1_receive_flag;
 static FlagStatus can0_error_flag;
 static FlagStatus can1_error_flag;
+static backsupportModelClass simulink_model;
 
 /*!
     \brief      this function handles CAN0 RX0 exception
@@ -72,6 +74,7 @@ void vTaskBlinkLED( void * pvParameters )
         gpio_bit_reset(GPIOC, GPIO_PIN_1);
         gpio_bit_set(GPIOC, GPIO_PIN_2);
         vTaskDelay(100);
+        simulink_model.step();
     }
 }
 
@@ -103,6 +106,9 @@ int main(void)
 
     // Set up the peripherals
     setup_peripherals();
+
+    // Setup the simulink model
+    simulink_model.initialize();
 
     printf("Peripherals setup complete\n");
 
