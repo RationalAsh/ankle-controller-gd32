@@ -29,7 +29,8 @@
                 ]
             },
             "defines": [
-                "GD32F425"
+                "GD32F425",
+                "ARM_MATH_CM4"
             ],
             "macFrameworkPath": [
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"

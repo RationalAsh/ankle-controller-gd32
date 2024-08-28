@@ -20,14 +20,16 @@ add_compile_options(
         -Wall
         -Wextra
         -fshort-enums 
-        -Wsign-compare
-        -Wdouble-promotion
         -ffast-math
+        -Wno-strict-aliasing
+        -Wno-conversion
+        -Wno-implicit
         -Os
 )
 
 add_compile_definitions(
         -DGD32F425
+        -DARM_MATH_CM4
 )
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/BSP")

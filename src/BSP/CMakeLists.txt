@@ -14,12 +14,19 @@ add_library(bsp STATIC ${ALL_C_SOURCES})
 
 target_compile_definitions(bsp PUBLIC
         -DGD32F425
+        -D__FPU_PRESENT
         )
+
+target_compile_options(bsp PUBLIC
+        -Wno-implicit
+)
 
 target_include_directories(bsp PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "${BSP_DIR}"
         "${CMSIS_DIR}"
+        "${CMSIS_DIR}/GD/"
+        "${CMSIS_DIR}/DSP/Include"
         "${CMSIS_DIR}/GD/GD32F4xx/Include"
         "${STD_PERIPH_DIR}/Include"
         )

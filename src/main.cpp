@@ -12,6 +12,7 @@
 #include "systick.h"
 #include "system_gd32f4xx.h"
 #include <stdio.h>
+#include "arm_math.h"
 
 static can_receive_message_struct receive_message;
 static FlagStatus can0_receive_flag;
