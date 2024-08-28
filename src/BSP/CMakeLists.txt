@@ -19,6 +19,10 @@ target_compile_definitions(bsp PUBLIC
 
 target_compile_options(bsp PUBLIC
         -Wno-implicit
+        -fsingle-precision-constant
+        -Wno-strict-aliasing
+        -Wno-conversion
+        -Wno-implicit
 )
 
 target_include_directories(bsp PUBLIC

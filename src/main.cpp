@@ -21,6 +21,7 @@ static FlagStatus can1_receive_flag;
 static FlagStatus can0_error_flag;
 static FlagStatus can1_error_flag;
 static backsupportModelClass simulink_model;
+static float32_t s = 0;
 
 /*!
     \brief      this function handles CAN0 RX0 exception
@@ -67,14 +68,28 @@ void vTaskBlinkLED( void * pvParameters )
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
 
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 2;
+
+    xLastWakeTime = xTaskGetTickCount();
+
     while(1) {
+        // gpio_bit_set(GPIOC, GPIO_PIN_1);
+        // gpio_bit_reset(GPIOC, GPIO_PIN_2);
+        // vTaskDelay(50);
+        // gpio_bit_reset(GPIOC, GPIO_PIN_1);
+        // gpio_bit_set(GPIOC, GPIO_PIN_2);
+        // vTaskDelay(100);
+
         gpio_bit_set(GPIOC, GPIO_PIN_1);
         gpio_bit_reset(GPIOC, GPIO_PIN_2);
-        vTaskDelay(50);
+        simulink_model.step();
+        s = expf(1.0f * xTaskGetTickCount()/1000.0f);
         gpio_bit_reset(GPIOC, GPIO_PIN_1);
         gpio_bit_set(GPIOC, GPIO_PIN_2);
-        vTaskDelay(100);
-        simulink_model.step();
+
+        // Wait for the next cycle.
+        vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
 }
 

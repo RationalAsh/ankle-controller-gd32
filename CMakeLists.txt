@@ -17,13 +17,11 @@ add_compile_options(
         -mfloat-abi=hard
         -fdata-sections
         -ffunction-sections
+        -Wdouble-promotion
         -Wall
         -Wextra
         -fshort-enums 
         -ffast-math
-        -Wno-strict-aliasing
-        -Wno-conversion
-        -Wno-implicit
         -Os
 )
 
