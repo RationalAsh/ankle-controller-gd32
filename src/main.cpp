@@ -21,6 +21,8 @@ static FlagStatus can1_receive_flag;
 static FlagStatus can0_error_flag;
 static FlagStatus can1_error_flag;
 static backsupportModelClass simulink_model;
+static backsupportModelClass::ExtU model_inputs;
+static backsupportModelClass::ExtY model_outputs;
 static float32_t s = 0;
 
 /*!
@@ -68,25 +70,66 @@ void vTaskBlinkLED( void * pvParameters )
 
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
 
+    // Task call counter
+    static uint32_t ulCallCount = 0;
+
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = 2;
 
     xLastWakeTime = xTaskGetTickCount();
 
     while(1) {
-        // gpio_bit_set(GPIOC, GPIO_PIN_1);
-        // gpio_bit_reset(GPIOC, GPIO_PIN_2);
-        // vTaskDelay(50);
-        // gpio_bit_reset(GPIOC, GPIO_PIN_1);
-        // gpio_bit_set(GPIOC, GPIO_PIN_2);
-        // vTaskDelay(100);
+
+        // Setup the model inputs
+        model_inputs.TimeSignal = xTaskGetTickCount() * 0.001f;
+
+        model_inputs.SpringEncoder1 = 0.0f;
+
+        model_inputs.IMU1[0] = 0.0f;
+        model_inputs.IMU1[1] = 0.0f;
+        model_inputs.IMU1[2] = 0.0f;
+        model_inputs.IMU1[3] = 0.0f;
+        model_inputs.IMU1[4] = 0.0f;
+        model_inputs.IMU1[5] = 0.0f;
+
+        // Control Gains
+        model_inputs.Kp = 1.50;
+        model_inputs.Kd = 0.02;
+        model_inputs.Ki = 0.00001;
+        model_inputs.Kff = (1.0/9.0);
+        model_inputs.k_theta = 0.182;
+
+        // The control input mode.
+        model_inputs.Mode = 6;
+        
+        if (ulCallCount == 0) {
+            model_inputs.EnableAssist = 0;
+        }
+
+
+        if (ulCallCount > 1000) {
+            model_inputs.EnableAssist = 1;
+        }
 
         gpio_bit_set(GPIOC, GPIO_PIN_1);
-        gpio_bit_reset(GPIOC, GPIO_PIN_2);
+        
+        // Set the model inputs
+        simulink_model.setExternalInputs(&model_inputs);
         simulink_model.step();
-        s = expf(1.0f * xTaskGetTickCount()/1000.0f);
+        // Read model outputs
+        model_outputs = simulink_model.getExternalOutputs();    
+        
+        
         gpio_bit_reset(GPIOC, GPIO_PIN_1);
-        gpio_bit_set(GPIOC, GPIO_PIN_2);
+
+        if (model_outputs.LEDStates[0] == 1) {
+            gpio_bit_reset(GPIOC, GPIO_PIN_2);
+        } else {
+            gpio_bit_set(GPIOC, GPIO_PIN_2);
+        }
+
+        // Increment the counter
+        ulCallCount++;
 
         // Wait for the next cycle.
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
