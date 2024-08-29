@@ -63,7 +63,7 @@ void CAN1_RX0_IRQHandler(void)
 void setup_peripherals();
 
 /* Task to blink an led. */
-void vTaskBlinkLED( void * pvParameters )
+void vTaskControlLoop( void * pvParameters )
 {
     /* The parameter value is expected to be 1 as 1 is passed in the
        pvParameters value in the call to xTaskCreate() below. */
@@ -79,12 +79,16 @@ void vTaskBlinkLED( void * pvParameters )
     xLastWakeTime = xTaskGetTickCount();
 
     while(1) {
+        // Turn on LED to measure the time taken to execute the task
+        gpio_bit_set(GPIOC, GPIO_PIN_1);
 
         // Setup the model inputs
         model_inputs.TimeSignal = xTaskGetTickCount() * 0.001f;
 
+        // Spring Encoder Data
         model_inputs.SpringEncoder1 = 0.0f;
 
+        // IMU Data
         model_inputs.IMU1[0] = 0.0f;
         model_inputs.IMU1[1] = 0.0f;
         model_inputs.IMU1[2] = 0.0f;
@@ -110,8 +114,6 @@ void vTaskBlinkLED( void * pvParameters )
         if (ulCallCount > 1000) {
             model_inputs.EnableAssist = 1;
         }
-
-        gpio_bit_set(GPIOC, GPIO_PIN_1);
         
         // Set the model inputs
         simulink_model.setExternalInputs(&model_inputs);
@@ -120,7 +122,8 @@ void vTaskBlinkLED( void * pvParameters )
         model_outputs = simulink_model.getExternalOutputs();    
         
         
-        gpio_bit_reset(GPIOC, GPIO_PIN_1);
+        // Set the motor command
+        // set_motor_command(model_outputs.Motor1Command);
 
         if (model_outputs.LEDStates[0] == 1) {
             gpio_bit_reset(GPIOC, GPIO_PIN_2);
@@ -132,6 +135,7 @@ void vTaskBlinkLED( void * pvParameters )
         ulCallCount++;
 
         // Wait for the next cycle.
+        gpio_bit_reset(GPIOC, GPIO_PIN_1); // Turn off the LED
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
 }
@@ -179,7 +183,7 @@ int main(void)
 
     /* Create the task, storing the handle. */
     xReturned = xTaskCreate(
-                    vTaskBlinkLED,       /* Function that implements the task. */
+                    vTaskControlLoop,       /* Function that implements the task. */
                     "BLINK_LED",          /* Text name for the task. */
                     64,      /* Stack size in words, not bytes. */
                     ( void * ) 1,    /* Parameter passed into the task. */
