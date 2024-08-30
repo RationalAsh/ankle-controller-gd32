@@ -62,7 +62,7 @@ void CAN1_RX0_IRQHandler(void)
 
 /* Function Declarations */
 void setup_peripherals();
-void set_motor_current(unsigned int id, uint16_t current);
+void set_motor_current(unsigned int id, int16_t cmd);
 
 /* Task to blink an led. */
 void vTaskControlLoop( void * pvParameters )
@@ -74,6 +74,7 @@ void vTaskControlLoop( void * pvParameters )
 
     // Task call counter
     static uint32_t ulCallCount = 0;
+    static uint8_t seconds_pulser = 0;
 
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = 2;
@@ -116,6 +117,10 @@ void vTaskControlLoop( void * pvParameters )
         if (ulCallCount > 1000) {
             model_inputs.EnableAssist = 1;
         }
+
+        if(ulCallCount % 1000 == 0) {
+            seconds_pulser = !seconds_pulser;
+        }
         
         // Set the model inputs
         simulink_model.setExternalInputs(&model_inputs);
@@ -126,6 +131,9 @@ void vTaskControlLoop( void * pvParameters )
         
         // Set the motor command
         // set_motor_command(model_outputs.Motor1Command);
+        //int16_t mcmd = 150.0f * arm_sin_f32(model_inputs.TimeSignal * 2 * PI * 1.0f);
+        set_motor_current(1, seconds_pulser ? 60 : -60);
+        // set_motor_current(1, 0);
 
         if (model_outputs.LEDStates[0] == 1) {
             gpio_bit_reset(GPIOC, GPIO_PIN_2);
@@ -185,12 +193,12 @@ int main(void)
 
     /* Create the task, storing the handle. */
     xReturned = xTaskCreate(
-                    vTaskControlLoop,       /* Function that implements the task. */
-                    "BLINK_LED",          /* Text name for the task. */
-                    64,      /* Stack size in words, not bytes. */
-                    ( void * ) 1,    /* Parameter passed into the task. */
-                    3,/* Priority at which the task is created. */
-                    &xHandle );      /* Used to pass out the created task's handle. */
+                vTaskControlLoop,   /* Function that implements the task. */
+                "BLINK_LED",        /* Text name for the task. */
+                64,                 /* Stack size in words, not bytes. */
+                ( void * ) 1,       /* Parameter passed into the task. */
+                3,                  /* Priority at which the task is created. */
+                &xHandle );         /* Used to pass out the created task's handle. */
 
     if( xReturned == pdPASS )
     {
@@ -466,5 +474,5 @@ void set_motor_current(unsigned int id, int16_t cmd) {
     transmit_message.tx_data[7] = 0x00;
 
     // Transmit the message
-    uint8_t tx_mb = can_message_transmit(CAN0, &transmit_message);
+    uint8_t tx_mb = can_message_transmit(CAN1, &transmit_message);
 }
