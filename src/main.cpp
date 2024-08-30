@@ -60,7 +60,9 @@ void CAN1_RX0_IRQHandler(void)
     }
 }
 
+/* Function Declarations */
 void setup_peripherals();
+void set_motor_current(unsigned int id, uint16_t current);
 
 /* Task to blink an led. */
 void vTaskControlLoop( void * pvParameters )
@@ -335,8 +337,8 @@ static inline void setup_can() {
     can_init(CAN1, &can_parameter);
 
     // Enable the CAN Bus reception FIFO0 not empty interrupt
-    // can_interrupt_enable(CAN0, CAN_INT_RFNE0);
-    // can_interrupt_enable(CAN1, CAN_INT_RFNE0);
+    can_interrupt_enable(CAN0, CAN_INT_RFNE0);
+    can_interrupt_enable(CAN1, CAN_INT_RFNE0);
 }
 
 static inline void nvic_config() {
@@ -421,4 +423,48 @@ int fputc(int ch, FILE *f)
     usart_data_transmit(USART2, (uint8_t)ch);
     while(RESET == usart_flag_get(USART2, USART_FLAG_TBE));
     return ch;
+}
+
+void set_motor_current(unsigned int id, int16_t cmd) {
+    // Create a new message for transmission
+    can_trasnmit_message_struct transmit_message;
+    int16_t cmd2send = 0;
+    uint16_t cmd2sendu = 0;
+
+    // Safety check the command
+    if (cmd > 2000) {
+        cmd2send = 2000;
+    } else if (cmd < -2000) {
+        cmd2send = -2000;
+    } else {
+        cmd2send = cmd; 
+    }
+
+    // Convert the command to an unsigned integer
+    memcpy(&cmd2sendu, &cmd2send, 2);
+
+    // Set the message ID
+    transmit_message.tx_sfid = 0x140 + id;
+    transmit_message.tx_efid = 0x00;
+
+    // Set the message type
+    transmit_message.tx_ff = CAN_FF_STANDARD; // Standard frame format
+    transmit_message.tx_ft = CAN_FT_DATA;     // Data frame
+
+    // Set the message length
+    transmit_message.tx_dlen = 8;
+
+    // Set the message data 
+    // Current is in bytes 4 and 5 of the data
+    transmit_message.tx_data[0] = 0xA1; // Command byte
+    transmit_message.tx_data[1] = 0x00; 
+    transmit_message.tx_data[2] = 0x00;
+    transmit_message.tx_data[3] = 0x00;
+    transmit_message.tx_data[4] = (cmd2sendu & 0xFF);
+    transmit_message.tx_data[5] = ((cmd2sendu >> 8) & 0xFF);
+    transmit_message.tx_data[6] = 0x00;
+    transmit_message.tx_data[7] = 0x00;
+
+    // Transmit the message
+    uint8_t tx_mb = can_message_transmit(CAN0, &transmit_message);
 }
