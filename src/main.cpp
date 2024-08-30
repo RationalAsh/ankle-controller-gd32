@@ -64,7 +64,7 @@ void CAN1_RX0_IRQHandler(void)
 void setup_peripherals();
 void set_motor_current(unsigned int id, int16_t cmd);
 
-/* Task to blink an led. */
+/* Main control loop task. */
 void vTaskControlLoop( void * pvParameters )
 {
     /* The parameter value is expected to be 1 as 1 is passed in the
