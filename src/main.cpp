@@ -63,6 +63,8 @@ void CAN1_RX0_IRQHandler(void)
 /* Function Declarations */
 void setup_peripherals();
 void set_motor_current(unsigned int id, int16_t cmd);
+int16_t read_incremental_encoder1();
+int16_t read_incremental_encoder2();
 
 /* Main control loop task. */
 void vTaskControlLoop( void * pvParameters )
@@ -89,7 +91,7 @@ void vTaskControlLoop( void * pvParameters )
         model_inputs.TimeSignal = xTaskGetTickCount() * 0.001f;
 
         // Spring Encoder Data
-        model_inputs.SpringEncoder1 = 0.0f;
+        model_inputs.SpringEncoder1 = read_incremental_encoder1();
 
         // IMU Data
         model_inputs.IMU1[0] = 0.0f;
@@ -131,8 +133,8 @@ void vTaskControlLoop( void * pvParameters )
         
         // Set the motor command
         // set_motor_command(model_outputs.Motor1Command);
-        //int16_t mcmd = 150.0f * arm_sin_f32(model_inputs.TimeSignal * 2 * PI * 1.0f);
-        set_motor_current(1, seconds_pulser ? 60 : -60);
+        int16_t mcmd = 150.0f * arm_sin_f32(model_inputs.TimeSignal * 2 * PI * 1.0f);
+        // set_motor_current(1, seconds_pulser ? 60 : -60);
         // set_motor_current(1, 0);
 
         if (model_outputs.LEDStates[0] == 1) {
@@ -193,12 +195,12 @@ int main(void)
 
     /* Create the task, storing the handle. */
     xReturned = xTaskCreate(
-                vTaskControlLoop,   /* Function that implements the task. */
-                "BLINK_LED",        /* Text name for the task. */
-                64,                 /* Stack size in words, not bytes. */
-                ( void * ) 1,       /* Parameter passed into the task. */
-                3,                  /* Priority at which the task is created. */
-                &xHandle );         /* Used to pass out the created task's handle. */
+        vTaskControlLoop,   /* Function that implements the task. */
+        "CONTROL_LOOP",        /* Text name for the task. */
+        64,                 /* Stack size in words, not bytes. */
+        ( void * ) 1,       /* Parameter passed into the task. */
+        3,                  /* Priority at which the task is created. */
+        &xHandle );         /* Used to pass out the created task's handle. */
 
     if( xReturned == pdPASS )
     {
@@ -373,6 +375,11 @@ static inline void incremental_encoder1_setup() {
     timer_counter_value_config(TIMER3, 0x0000);
 }
 
+// Function to read the incremental encoder 1
+int16_t read_incremental_encoder1() {
+    return timer_counter_read(TIMER3);
+}
+
 static inline void incremental_encoder2_setup() {
     // Enable clock to timer 4
     rcu_periph_clock_enable(RCU_TIMER4);
@@ -390,6 +397,11 @@ static inline void incremental_encoder2_setup() {
     timer_autoreload_value_config(TIMER4, 0xFFFF);
     // Set the initial value to 0
     timer_counter_value_config(TIMER4, 0x0000);
+}
+
+// Function to read the incremental encoder 2
+int16_t read_incremental_encoder2() {
+    return timer_counter_read(TIMER4);
 }
 
 static inline void setup_usart() {
