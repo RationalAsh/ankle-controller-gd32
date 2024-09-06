@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "compare": "c",
+        "limits": "c",
+        "new": "c"
     }
 }

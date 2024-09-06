@@ -6,7 +6,7 @@ target_include_directories(simulink PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_compile_definitions(bsp PUBLIC
+target_compile_definitions(simulink PUBLIC
         MODEL=shoulder1dof_gyems
         NUMST=1
         NCSTATES=0

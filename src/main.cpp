@@ -25,6 +25,10 @@ static backsupportModelClass::ExtU model_inputs;
 static backsupportModelClass::ExtY model_outputs;
 static float32_t s = 0;
 
+// Encoder data
+static int16_t encoder1_data = 0;
+static int16_t encoder2_data = 0;
+
 /*!
     \brief      this function handles CAN0 RX0 exception
     \param[in]  none
@@ -63,6 +67,7 @@ void CAN1_RX0_IRQHandler(void)
 /* Function Declarations */
 void setup_peripherals();
 void set_motor_current(unsigned int id, int16_t cmd);
+void print_string(char *str);
 int16_t read_incremental_encoder1();
 int16_t read_incremental_encoder2();
 
@@ -87,11 +92,15 @@ void vTaskControlLoop( void * pvParameters )
         // Turn on LED to measure the time taken to execute the task
         gpio_bit_set(GPIOC, GPIO_PIN_1);
 
+        // Read the encoder data
+        encoder1_data = read_incremental_encoder1();
+        encoder2_data = read_incremental_encoder2();
+
         // Setup the model inputs
         model_inputs.TimeSignal = xTaskGetTickCount() * 0.001f;
 
         // Spring Encoder Data
-        model_inputs.SpringEncoder1 = read_incremental_encoder1();
+        model_inputs.SpringEncoder1 = encoder1_data;
 
         // IMU Data
         model_inputs.IMU1[0] = 0.0f;
@@ -133,15 +142,17 @@ void vTaskControlLoop( void * pvParameters )
         
         // Set the motor command
         // set_motor_command(model_outputs.Motor1Command);
-        int16_t mcmd = 150.0f * arm_sin_f32(model_inputs.TimeSignal * 2 * PI * 1.0f);
+        int16_t mcmd = 150.0f * expf(model_inputs.TimeSignal * 2 * PI * 1.0f);
         // set_motor_current(1, seconds_pulser ? 60 : -60);
         // set_motor_current(1, 0);
 
-        if (model_outputs.LEDStates[0] == 1) {
-            gpio_bit_reset(GPIOC, GPIO_PIN_2);
-        } else {
-            gpio_bit_set(GPIOC, GPIO_PIN_2);
-        }
+        gpio_bit_write(GPIOC, GPIO_PIN_2, ((encoder1_data>>8) & 0x01) ? SET : RESET);
+
+        // if (encoder1_data > 0) {
+        //     gpio_bit_reset(GPIOC, GPIO_PIN_2);
+        // } else {
+        //     gpio_bit_set(GPIOC, GPIO_PIN_2);
+        // }
 
         // Increment the counter
         ulCallCount++;
@@ -151,6 +162,51 @@ void vTaskControlLoop( void * pvParameters )
         vTaskDelayUntil( &xLastWakeTime, xFrequency );
     }
 }
+
+// Task to handle bluetooth communication with the Ai-Thinker bluetooth module PB-03F
+void vTaskBluetooth( void * pvParameters )
+{
+    /* The parameter value is expected to be 1 as 1 is passed in the
+       pvParameters value in the call to xTaskCreate() below. */
+
+    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
+
+    // Task call counter
+    static uint32_t ulCallCount = 0;
+
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 1000;
+
+    xLastWakeTime = xTaskGetTickCount();
+
+    // Set the BLE Name
+    print_string("AT+BLENAME=ReAnk\r\n");
+    vTaskDelay(100);
+
+    // Set mode to 1
+    print_string("AT+BLEMODE=0\r\n");
+    vTaskDelay(100);
+
+    // Enter Transparent mode
+    vTaskDelay(100);
+
+    while(1) {
+        // Turn on LED to measure the time taken to execute the task
+        // gpio_bit_set(GPIOC, GPIO_PIN_1);
+
+        // Increment the counter
+        ulCallCount++;
+
+        // Send data in transparent mode: Command Format: +DATA:<len>,<data>
+        // printf("+DATA:5,Hello\r\n");
+        print_string("AT+BLESEND=5,Hello\r\n");
+
+        // Wait for the next cycle.
+        // gpio_bit_reset(GPIOC, GPIO_PIN_1); // Turn off the LED
+        vTaskDelayUntil( &xLastWakeTime, xFrequency );
+    }
+}
+
 
 // Define vApplicationMallocFailedHook() to catch memory allocation errors
 void vApplicationMallocFailedHook( void )
@@ -184,7 +240,8 @@ int main(void)
     // Setup the simulink model
     simulink_model.initialize();
 
-    printf("Peripherals setup complete\n");
+    // printf("Peripherals setup complete\n");
+    // printf("AT+TRANSENTER\r\n");
 
     // Turn on both LEDs
     gpio_bit_set(GPIOC, GPIO_PIN_1);
@@ -207,6 +264,20 @@ int main(void)
         /* The task was created. Use the task's handle to delete the task. */
         // vTaskDelete( xHandle );
     }
+
+    /* Create the task, storing the handle. */
+    xReturned = xTaskCreate(
+        vTaskBluetooth,   /* Function that implements the task. */
+        "BLUETOOTH",        /* Text name for the task. */
+        64,                 /* Stack size in words, not bytes. */
+        ( void * ) 1,       /* Parameter passed into the task. */
+        2,                  /* Priority at which the task is created. */
+        &xHandle );         /* Used to pass out the created task's handle. */
+
+    // if( xReturned == pdPASS ) {
+    //     /* The task was created. Use the task's handle to delete the task. */
+    //     // vTaskDelete( xHandle );
+    // }
 
     /* Start the scheduler so the tasks start executing. */
     vTaskStartScheduler();
@@ -301,6 +372,17 @@ static inline void setup_gpio() {
     // Configure GPIOB pins 6 and 7 as encoder A and B channels
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_6);
     gpio_af_set(GPIOB, GPIO_AF_2, GPIO_PIN_7);
+
+    /* Configure the GPIO pins PA2 and PA3 for USART1 */
+    // Set up gpio output options
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
+    gpio_output_options_set(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_3);
+    // Set up gpio mode
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_2);
+    gpio_mode_set(GPIOA, GPIO_MODE_AF, GPIO_PUPD_PULLUP, GPIO_PIN_3);
+    // Configure GPIOA pins 2 and 3 as USART1 TX and RX
+    gpio_af_set(GPIOA, GPIO_AF_7, GPIO_PIN_2);
+    gpio_af_set(GPIOA, GPIO_AF_7, GPIO_PIN_3);
 
     /* Configure the GPIO pins PC10 and PC11 for USART2 */
     // Set up gpio output options
@@ -404,7 +486,7 @@ int16_t read_incremental_encoder2() {
     return timer_counter_read(TIMER4);
 }
 
-static inline void setup_usart() {
+static inline void setup_usart2() {
     // Enable the USART2 peripheral
     rcu_periph_clock_enable(RCU_USART2);
 
@@ -416,6 +498,20 @@ static inline void setup_usart() {
     usart_receive_config(USART2, USART_RECEIVE_ENABLE);
     usart_transmit_config(USART2, USART_TRANSMIT_ENABLE);
     usart_enable(USART2);
+}
+
+static inline void setup_usart1() {
+    // Enable the USART1 peripheral
+    rcu_periph_clock_enable(RCU_USART1);
+
+    // Set the baud rate to 115200
+    usart_baudrate_set(USART1, 115200U);
+
+    // Receive and transmit enable
+    usart_deinit(USART1);
+    usart_receive_config(USART1, USART_RECEIVE_ENABLE);
+    usart_transmit_config(USART1, USART_TRANSMIT_ENABLE);
+    usart_enable(USART1);
 }
 
 // Function to set up all the peripherals on the board
@@ -430,20 +526,36 @@ void setup_peripherals() {
     incremental_encoder1_setup();
     incremental_encoder2_setup();
 
-    // Set up the USART peripheral
-    setup_usart();
+    // Set up the USART2 peripheral
+    setup_usart2();
+
+    // Set up the USART1 peripheral
+    setup_usart1();
 
     // Set up the NVIC
     nvic_config();
 }
 
+void print_string(char *str) {
+    while(*str) {
+        usart_data_transmit(USART1, *str++);
+        while(RESET == usart_flag_get(USART1, USART_FLAG_TBE));
+    }
+}
+
 /* retarget the C library printf function to the USART */
-int fputc(int ch, FILE *f)
+int __io_putchar(int ch)
 {
-    usart_data_transmit(USART2, (uint8_t)ch);
-    while(RESET == usart_flag_get(USART2, USART_FLAG_TBE));
+    usart_data_transmit(USART1, (uint8_t)ch);
+    while(RESET == usart_flag_get(USART1, USART_FLAG_TBE));
     return ch;
 }
+// int fputc(int ch, FILE *f)
+// {
+//     usart_data_transmit(USART1, (uint8_t)ch);
+//     while(RESET == usart_flag_get(USART1, USART_FLAG_TBE));
+//     return ch;
+// }
 
 void set_motor_current(unsigned int id, int16_t cmd) {
     // Create a new message for transmission

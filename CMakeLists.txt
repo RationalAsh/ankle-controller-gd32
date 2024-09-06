@@ -3,7 +3,7 @@ project(gd32-motor-controller)
 
 enable_language(C ASM CXX)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C)
 set(EXECUTABLE ${PROJECT_NAME}.out)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/arm-none-eabi-gcc.cmake")
