@@ -9,10 +9,16 @@ First build the docker image locally (optional).
 docker build -t arm-toolchain .
 ```
 
-Then run the docker container with the following command.
+Then run the docker container with the following command (unix).
 
 ```bash
 docker run --rm -v $(pwd):/workspace -w /workspace ashwinnarayan1994/arm-toolchain bash -c "./build.sh"
+```
+
+And the following command (PowerShell)
+
+```powershell
+docker run --rm -v ${PWD}:/workspace -w /workspace ashwinnarayan1994/arm-toolchain bash -c "./build.sh"
 ```
 
 This command 
