@@ -31,7 +31,7 @@ RUN python3 --version && cmake --version binutils-arm-none-eabi
 # Print out the PATH
 RUN echo $PATH
 # Print the version of the ARM toolchain
-# RUN arm-none-eabi-gcc --version && arm-none-eabi-g++ --version
+RUN arm-none-eabi-gcc --version && arm-none-eabi-g++ --version
 
 # Set a working directory
 WORKDIR /workspace

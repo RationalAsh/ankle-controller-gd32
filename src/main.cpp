@@ -102,7 +102,7 @@ void vTaskControlLoop( void * pvParameters )
         // Spring Encoder Data
         model_inputs.SpringEncoder1 = encoder1_data;
 
-        // IMU Data
+        // IMU Data - set the IMU data here.
         model_inputs.IMU1[0] = 0.0f;
         model_inputs.IMU1[1] = 0.0f;
         model_inputs.IMU1[2] = 0.0f;
@@ -110,7 +110,7 @@ void vTaskControlLoop( void * pvParameters )
         model_inputs.IMU1[4] = 0.0f;
         model_inputs.IMU1[5] = 0.0f;
 
-        // Control Gains
+        // Control Gains - set the control gains here.
         model_inputs.Kp = 1.50;
         model_inputs.Kd = 0.02;
         model_inputs.Ki = 0.00001;
@@ -124,7 +124,7 @@ void vTaskControlLoop( void * pvParameters )
             model_inputs.EnableAssist = 0;
         }
 
-
+        // Enable assist after 1000 calls
         if (ulCallCount > 1000) {
             model_inputs.EnableAssist = 1;
         }
@@ -135,6 +135,7 @@ void vTaskControlLoop( void * pvParameters )
         
         // Set the model inputs
         simulink_model.setExternalInputs(&model_inputs);
+        // Run the model step function
         simulink_model.step();
         // Read model outputs
         model_outputs = simulink_model.getExternalOutputs();    

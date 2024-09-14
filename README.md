@@ -3,16 +3,16 @@
 # How to build
 Make sure you have docker installed.
 
-First build the docker image locally.
+First build the docker image locally (optional).
 
 ```bash
-docker build -t arm-toolchain-alpine .
+docker build -t arm-toolchain .
 ```
 
 Then run the docker container with the following command.
 
 ```bash
-docker run --rm -v $(pwd):/workspace -w /workspace arm-toolchain-alpine bash -c "./build.sh"
+docker run --rm -v $(pwd):/workspace -w /workspace ashwinnarayan1994/arm-toolchain bash -c "./build.sh"
 ```
 
 This command 
