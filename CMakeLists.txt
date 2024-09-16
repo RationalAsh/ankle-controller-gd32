@@ -35,12 +35,27 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/src/FreeRTOS")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/Simulink")
 
 add_executable(${EXECUTABLE} "${CMAKE_SOURCE_DIR}/src/main.cpp") 
+add_executable(bootloader "${CMAKE_SOURCE_DIR}/src/bootloader.c")
 
 target_link_libraries(${EXECUTABLE} LINK_PUBLIC
         bsp
         freertos_kernel
         simulink
 )
+
+target_link_options(bootloader PRIVATE
+        #-T${CMAKE_SOURCE_DIR}/src/BSP/gd32f425.ld
+        -mcpu=cortex-m4
+        -mthumb
+        -mfpu=fpv4-sp-d16
+        -mfloat-abi=hard
+        -specs=nosys.specs
+        -lc
+        -lm
+        -lnosys
+        -Wl,-Map=${PROJECT_NAME}.map,--cref
+        -Wl,--gc-sections
+        )
 
 target_link_options(${EXECUTABLE} PRIVATE
         -T${CMAKE_SOURCE_DIR}/src/BSP/gd32f425.ld
