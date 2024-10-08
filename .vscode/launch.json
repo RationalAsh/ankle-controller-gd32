@@ -6,6 +6,7 @@
     "configurations": [
         {
             "name": "GD32 with GDB and OpenOCD",
+            "type": "gdb",
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "target": "${workspaceRoot}/build/gd32-motor-controller.out",
@@ -15,6 +16,19 @@
                 "symbol-file ${workspaceRoot}/build/gd32-motor-controller.out",
                 "monitor reset",
             ]
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "name": "Debug (SWD)",
+            "executable": "${workspaceRoot}/build/gd32-motor-controller.out",
+            "cwd": "${workspaceRoot}",
+            "device": "GD32F425RE",
+            "servertype": "stutil",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceRoot}/docs/gd32f425.svd",
+            // "configFiles": ["${workspaceRoot}/gd32f425.cfg"],
+            "interface": "swd"
         }
     ]
 }

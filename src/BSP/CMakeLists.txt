@@ -23,6 +23,7 @@ target_compile_options(bsp PUBLIC
         -Wno-strict-aliasing
         -Wno-conversion
         -Wno-implicit
+        -g
 )
 
 target_include_directories(bsp PUBLIC

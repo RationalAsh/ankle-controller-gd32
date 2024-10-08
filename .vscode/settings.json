@@ -4,5 +4,6 @@
         "compare": "c",
         "limits": "c",
         "new": "c"
-    }
+    },
+    "cortex-debug.armToolchainPath": "/Applications/ARM/bin"
 }

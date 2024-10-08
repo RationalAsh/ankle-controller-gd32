@@ -124,7 +124,7 @@ void vTaskControlLoop( void * pvParameters )
             model_inputs.EnableAssist = 0;
         }
 
-        // Enable assist after 1000 calls
+        // Enable assist after 1 second of operation.
         if (ulCallCount > 1000) {
             model_inputs.EnableAssist = 1;
         }
